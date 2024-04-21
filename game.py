@@ -3,23 +3,18 @@ from pygame.math import Vector2
 import random
 
 
-# TODO 
-# vykreslovani - posouva se dopredu o jeden blok, nejdriv telo, pak hlava, proto se v jednom momente mohou prekryvat, proto by byo dobre po snezeni jidla
-# vynechat posun tela, dosadit dopredu dalsi block, a pak posunout hlavu
 # TODO check colission
 
 # Color Declaration
 color_black = (0, 0, 0)
 color_red = (255,50,80)
-color_violet = (148, 0, 211)
-color_blue = (0, 0, 255)
+color_blue = (0, 255, 20)
 
 # Window resolution
-window_width = int(600)
-window_height = int(480)
-
-# Snake variables
 block_size = int(20)
+window_width = block_size * 26
+window_height = block_size * 26
+
 
 
 # PyGame Initialization
@@ -48,20 +43,18 @@ class Snake:
 
     def move(self):
         """Move snake"""
-        # posunout indexy podle predchozich pozic - co bylo na [0] dat na [1], co bylo na [1] dat na [2], atd...
-        # Move each segment except head to the position of the segment before it
+        # Move each segment except head to the position of the segment before it (from list_length to 1)
         for i in range(len(self.body) -1, 0, -1):
             self.body[i].x = self.body[i - 1].x
             self.body[i].y = self.body[i - 1].y
-        # posunout [0] na vypoctenou pozici
         # Move head based on direction
         self.body[0].x += (self.direction_x * block_size)
         self.body[0].y += (self.direction_y * block_size)        
             
     def grow(self):
         """Grow snake by adding a new segment at the head"""
-        new_head = self.body[0] + Vector2(self.direction_x * block_size, self.direction_y * block_size)
-        self.body.insert(0, new_head)  # Insert at the head (index 0)
+        snake_head = self.body[0] + Vector2(self.direction_x * block_size, self.direction_y * block_size)
+        self.body.insert(0, snake_head)
 
 
 # FOOD class
@@ -79,6 +72,19 @@ class Food:
         self.object = pygame.Rect(pos_x, pos_y, block_size, block_size)        
 
 
+# GAME class
+class Game:
+    def __init__(self) -> None: 
+        self.score = int(0)
+        self.running = True
+
+    def add_score(self) -> None:
+        """Add score points"""
+        self.score += 10
+        print('score:', self.score)
+
+
+
 def generate_food_position() -> tuple[int, int]:
     """Generate random number"""
     max_width = int(window_width / block_size)
@@ -88,13 +94,14 @@ def generate_food_position() -> tuple[int, int]:
     return (x, y)
 
 
+
 def game():
     """Game loop"""
-    game_running = True
     snake = Snake()
     food = Food()
+    game = Game()
 
-    while game_running:
+    while game.running:
         # Events
         for event in pygame.event.get():
             # Key press event
@@ -102,16 +109,16 @@ def game():
                 # Binded keys
                 if (event.key == pygame.K_ESCAPE):
                     pygame.quit()
-                elif (event.key == pygame.K_DOWN):
+                elif (event.key == pygame.K_DOWN and snake.direction_x != 0):
                     snake.direction_x = 0
                     snake.direction_y = 1
-                elif (event.key == pygame.K_UP):
+                elif (event.key == pygame.K_UP and snake.direction_x != 0):
                     snake.direction_x = 0
                     snake.direction_y = -1
-                elif (event.key == pygame.K_LEFT):
+                elif (event.key == pygame.K_LEFT and snake.direction_y != 0):
                     snake.direction_x = -1
                     snake.direction_y = 0
-                elif (event.key == pygame.K_RIGHT):
+                elif (event.key == pygame.K_RIGHT and snake.direction_y != 0):
                     snake.direction_x = 1
                     snake.direction_y = 0
 
@@ -120,14 +127,14 @@ def game():
         # Food
         food.draw()
 
-        # Eat food
+        # Grow snake / Move snake
         if (food.object.x == snake.body[0].x and food.object.y == snake.body[0].y):
             snake.grow()
             food.respawn()
+            game.add_score()
         else:
             snake.move()
             
-
         # Draw snake 
         snake.draw()
 
