@@ -33,6 +33,7 @@ class Snake:
         self.direction_y = 0
         # Body using vector position - [head, body]
         self.body = [Vector2(block_size * 3, block_size * 3), Vector2(block_size * 2, block_size * 3)]
+        self.crashed = False
 
     def draw(self) -> None:
         """Draw snake body on 'canvas'"""
@@ -41,20 +42,28 @@ class Snake:
             # draw on canvas
             pygame.draw.rect(game_screen, color_blue, rect)
 
-    def move(self):
+    def move(self) -> None:
         """Move snake"""
         # Move each segment except head to the position of the segment before it (from list_length to 1)
         for i in range(len(self.body) -1, 0, -1):
+            # check if snaked crashed
+            self.is_crashed(self.body[i])
+            # body movement
             self.body[i].x = self.body[i - 1].x
             self.body[i].y = self.body[i - 1].y
         # Move head based on direction
-        self.body[0].x += (self.direction_x * block_size)
-        self.body[0].y += (self.direction_y * block_size)        
+        self.body[0].x += self.direction_x * block_size
+        self.body[0].y += self.direction_y * block_size
             
-    def grow(self):
+    def grow(self) -> None:
         """Grow snake by adding a new segment at the head"""
         snake_head = self.body[0] + Vector2(self.direction_x * block_size, self.direction_y * block_size)
         self.body.insert(0, snake_head)
+
+    def is_crashed(self, body_part: Vector2) -> None:
+        """Whether snaked crashed into his body"""
+        crash_happened = body_part == self.body[0]
+        if crash_happened: self.crashed = True
 
 
 # FOOD class
@@ -62,11 +71,11 @@ class Food:
     def __init__(self) -> None:
         self.respawn()
 
-    def draw(self):
+    def draw(self) -> None:
         """Draw food on canvas"""
         pygame.draw.rect(game_screen, color_red, self.object)
 
-    def respawn(self):
+    def respawn(self) -> None:
         """Change food position"""
         pos_x, pos_y = generate_food_position()
         self.object = pygame.Rect(pos_x, pos_y, block_size, block_size)        
@@ -82,6 +91,10 @@ class Game:
         """Add score points"""
         self.score += 10
         print('score:', self.score)
+
+    def stop_game(self) -> None:
+        """Stop game cycle"""
+        self.running = False
 
 
 
@@ -134,6 +147,11 @@ def game():
             game.add_score()
         else:
             snake.move()
+
+        # Check if snake crashed, then stop game
+        if snake.crashed: 
+            print('snake crashed')
+            game.stop_game()
             
         # Draw snake 
         snake.draw()
