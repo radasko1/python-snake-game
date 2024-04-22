@@ -65,6 +65,20 @@ class Snake:
         crash_happened = body_part == self.body[0]
         if crash_happened: self.crashed = True
 
+    def check_border(self) -> None:
+        for i in range(0, len(self.body), 1):
+            # left side border
+            if self.body[i].x == (block_size * -1): 
+                self.body[i] = Vector2(window_width, self.body[i].y)
+            # top side border (NOT WORKING)
+            elif self.body[i].y == (block_size * -1): 
+                self.body[i] = Vector2(self.body[i].x, window_height)
+            # right side border
+            elif self.body[i].x == window_width: 
+                self.body[i] = Vector2(0, self.body[i].y)
+            # bottom side border
+            elif self.body[i].y == window_height: 
+                self.body[i] = Vector2(self.body[i].x, 0)
 
 # FOOD class
 class Food:
@@ -147,18 +161,20 @@ def game():
             game.add_score()
         else:
             snake.move()
+        
+        snake.check_border()
 
         # Check if snake crashed, then stop game
         if snake.crashed: 
             print('snake crashed')
             game.stop_game()
-            
+
         # Draw snake 
         snake.draw()
 
         # Update screen
         pygame.display.update()   
-        clock.tick(10)     
+        clock.tick(5)     
     
 
 if __name__ == "__main__":
