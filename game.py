@@ -3,9 +3,8 @@ from pygame.math import Vector2
 import random
 
 
-# TODO check colission
-
 # Color Declaration
+color_white = (255, 255, 255)
 color_black = (0, 0, 0)
 color_red = (255,50,80)
 color_blue = (0, 255, 20)
@@ -16,12 +15,12 @@ window_width = block_size * 26
 window_height = block_size * 26
 
 
-
 # PyGame Initialization
 pygame.init()
 
 clock = pygame.time.Clock()
-
+font = pygame.font.SysFont(None, 20)
+score_text = font.render('score:', True, color_white)
 game_screen = pygame.display.set_mode((window_width, window_height))
 pygame.display.set_caption("Snake Game")
 
@@ -100,15 +99,20 @@ class Game:
     def __init__(self) -> None: 
         self.score = int(0)
         self.running = True
+        self.speed = int(0)
 
     def add_score(self) -> None:
         """Add score points"""
         self.score += 10
-        print('score:', self.score)
+        self.control_speed()
 
     def stop_game(self) -> None:
         """Stop game cycle"""
         self.running = False
+
+    def control_speed(self):
+        """Control game speed based on score"""
+        self.speed = self.score // 100
 
 
 
@@ -166,15 +170,19 @@ def game():
 
         # Check if snake crashed, then stop game
         if snake.crashed: 
-            print('snake crashed')
             game.stop_game()
+
+        # Update score text
+        score_text = font.render('score: ' + str(game.score), True, color_white)
 
         # Draw snake 
         snake.draw()
+        # render score on game screen
+        game_screen.blit(score_text, (10, 10))
 
         # Update screen
         pygame.display.update()   
-        clock.tick(5)     
+        clock.tick(5 + game.speed)     
     
 
 if __name__ == "__main__":
