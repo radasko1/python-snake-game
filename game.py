@@ -90,8 +90,16 @@ class Food:
 
     def respawn(self) -> None:
         """Change food position"""
-        pos_x, pos_y = generate_food_position()
-        self.object = pygame.Rect(pos_x, pos_y, block_size, block_size)        
+        pos_x, pos_y = self.generate_position()
+        self.object = pygame.Rect(pos_x, pos_y, block_size, block_size)   
+
+    def generate_position(self) -> tuple[int, int]:
+        """Generate random number"""
+        max_width = int(window_width / block_size)
+        max_height = int(window_height / block_size)
+        x = random.randrange(0, max_width, 1) * block_size
+        y = random.randrange(0, max_height, 1) * block_size
+        return (x, y)
 
 
 # GAME class
@@ -100,6 +108,8 @@ class Game:
         self.score = int(0)
         self.running = True
         self.speed = int(0)
+        self.snake = Snake()
+        self.food = Food()
 
     def add_score(self) -> None:
         """Add score points"""
@@ -110,29 +120,12 @@ class Game:
         """Stop game cycle"""
         self.running = False
 
-    def control_speed(self):
+    def control_speed(self) -> None:
         """Control game speed based on score"""
         self.speed = self.score // 100
 
-
-
-def generate_food_position() -> tuple[int, int]:
-    """Generate random number"""
-    max_width = int(window_width / block_size)
-    max_height = int(window_height / block_size)
-    x = random.randrange(0, max_width, 1) * block_size
-    y = random.randrange(0, max_height, 1) * block_size
-    return (x, y)
-
-
-
-def game():
-    """Game loop"""
-    snake = Snake()
-    food = Food()
-    game = Game()
-
-    while game.running:
+    def bind_keys(self) -> None:
+        """Bind control keys for game"""
         # Events
         for event in pygame.event.get():
             # Key press event
@@ -140,50 +133,51 @@ def game():
                 # Binded keys
                 if (event.key == pygame.K_ESCAPE):
                     pygame.quit()
-                elif (event.key == pygame.K_DOWN and snake.direction_x != 0):
-                    snake.direction_x = 0
-                    snake.direction_y = 1
-                elif (event.key == pygame.K_UP and snake.direction_x != 0):
-                    snake.direction_x = 0
-                    snake.direction_y = -1
-                elif (event.key == pygame.K_LEFT and snake.direction_y != 0):
-                    snake.direction_x = -1
-                    snake.direction_y = 0
-                elif (event.key == pygame.K_RIGHT and snake.direction_y != 0):
-                    snake.direction_x = 1
-                    snake.direction_y = 0
+                elif (event.key == pygame.K_DOWN and self.snake.direction_x != 0):
+                    self.snake.direction_x = 0
+                    self.snake.direction_y = 1
+                elif (event.key == pygame.K_UP and self.snake.direction_x != 0):
+                    self.snake.direction_x = 0
+                    self.snake.direction_y = -1
+                elif (event.key == pygame.K_LEFT and self.snake.direction_y != 0):
+                    self.snake.direction_x = -1
+                    self.snake.direction_y = 0
+                elif (event.key == pygame.K_RIGHT and self.snake.direction_y != 0):
+                    self.snake.direction_x = 1
+                    self.snake.direction_y = 0
 
-         # Redraw screen background
-        game_screen.fill(color_black)
-        # Food
-        food.draw()
+    def run(self) -> None:
+        """Run Snake game"""
+        while self.running:
+            self.bind_keys()
+            # Redraw screen background
+            game_screen.fill(color_black)
+            # Food
+            self.food.draw()
+            # Grow snake / Move snake
+            if (self.food.object.x == self.snake.body[0].x and self.food.object.y == self.snake.body[0].y):
+                self.snake.grow()
+                self.food.respawn()
+                self.add_score()
+            else:
+                self.snake.move()
+            # Snake position control
+            self.snake.check_border()
+            # Check if snake crashed, then stop game
+            if self.snake.crashed: 
+                self.stop_game()
+            # Update score text
+            score_text = font.render('score: ' + str(self.score), True, color_white)
+            # Draw snake 
+            self.snake.draw()
+            # render score on game screen
+            game_screen.blit(score_text, (10, 10))
+            # Update screen
+            pygame.display.update()   
+            clock.tick(5 + self.speed)     
 
-        # Grow snake / Move snake
-        if (food.object.x == snake.body[0].x and food.object.y == snake.body[0].y):
-            snake.grow()
-            food.respawn()
-            game.add_score()
-        else:
-            snake.move()
-        
-        snake.check_border()
-
-        # Check if snake crashed, then stop game
-        if snake.crashed: 
-            game.stop_game()
-
-        # Update score text
-        score_text = font.render('score: ' + str(game.score), True, color_white)
-
-        # Draw snake 
-        snake.draw()
-        # render score on game screen
-        game_screen.blit(score_text, (10, 10))
-
-        # Update screen
-        pygame.display.update()   
-        clock.tick(5 + game.speed)     
-    
+# GAME
+game = Game()
 
 if __name__ == "__main__":
-    game()
+    game.run()
